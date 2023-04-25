@@ -7,15 +7,24 @@ import ticketsRepository from '@/repositories/tickets-repository';
 
 async function getAllHotels(userId: number): Promise<Hotel[]> {
   const enrollment = await enrollmentRepository.findByUserId(userId);
-  const ticket = await ticketsRepository.findTicketByEnrollmentId(enrollment);
-  const hotelTrue = await ticketsRepository.findTickeWithTypeById(ticket.id);
-  const payment = await paymentsRepository.findPaymentByTicketId(ticket.id);
-  const hotel = await hotelsRepository.findHotel();
-  if (!enrollment || !ticket) {
+  if (!enrollment) {
     throw notFoundError();
   }
-  if (!payment || hotelTrue.TicketType.isRemote || !hotelTrue.TicketType.includesHotel) {
+  const ticket = await ticketsRepository.findTicketByEnrollmentId(enrollment.id);
+  if (!ticket) {
+    throw notFoundError();
+  }
+  const hotelTrue = await ticketsRepository.findTickeWithTypeById(ticket.id);
+  if (hotelTrue.TicketType.isRemote || !hotelTrue.TicketType.includesHotel) {
     throw paymentRequiredError();
+  }
+  const payment = await paymentsRepository.findPaymentByTicketId(ticket.id);
+  if (!payment || ticket.status !== 'PAID') {
+    throw paymentRequiredError();
+  }
+  const hotel = await hotelsRepository.findHotel();
+  if (hotel.length === 0) {
+    throw notFoundError();
   }
   return hotel;
 }
@@ -29,15 +38,24 @@ async function getAllRooms(
   }
 > {
   const enrollment = await enrollmentRepository.findByUserId(userId);
-  const ticket = await ticketsRepository.findTicketByEnrollmentId(enrollment);
-  const hotelTrue = await ticketsRepository.findTickeWithTypeById(ticket.id);
-  const payment = await paymentsRepository.findPaymentByTicketId(ticket.id);
-  const hotel = await hotelsRepository.findHotelRooms(hotelId);
-  if (!enrollment || !ticket || !hotel) {
+  if (!enrollment) {
     throw notFoundError();
   }
-  if (!payment || hotelTrue.TicketType.isRemote || !hotelTrue.TicketType.includesHotel) {
+  const ticket = await ticketsRepository.findTicketByEnrollmentId(enrollment.id);
+  if (!ticket) {
+    throw notFoundError();
+  }
+  const hotelTrue = await ticketsRepository.findTickeWithTypeById(ticket.id);
+  if (hotelTrue.TicketType.isRemote || !hotelTrue.TicketType.includesHotel) {
     throw paymentRequiredError();
+  }
+  const payment = await paymentsRepository.findPaymentByTicketId(ticket.id);
+  if (!payment) {
+    throw paymentRequiredError();
+  }
+  const hotel = await hotelsRepository.findHotelRooms(hotelId);
+  if (!hotel) {
+    throw notFoundError();
   }
   return hotel;
 }
