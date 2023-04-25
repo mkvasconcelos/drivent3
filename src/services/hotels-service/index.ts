@@ -18,8 +18,7 @@ async function getAllHotels(userId: number): Promise<Hotel[]> {
   if (hotelTrue.TicketType.isRemote || !hotelTrue.TicketType.includesHotel) {
     throw paymentRequiredError();
   }
-  const payment = await paymentsRepository.findPaymentByTicketId(ticket.id);
-  if (!payment || ticket.status !== 'PAID') {
+  if (ticket.status !== 'PAID') {
     throw paymentRequiredError();
   }
   const hotel = await hotelsRepository.findHotel();
@@ -49,8 +48,7 @@ async function getAllRooms(
   if (hotelTrue.TicketType.isRemote || !hotelTrue.TicketType.includesHotel) {
     throw paymentRequiredError();
   }
-  const payment = await paymentsRepository.findPaymentByTicketId(ticket.id);
-  if (!payment) {
+  if (ticket.status !== 'PAID') {
     throw paymentRequiredError();
   }
   const hotel = await hotelsRepository.findHotelRooms(hotelId);
